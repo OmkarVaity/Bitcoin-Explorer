@@ -34,7 +34,8 @@ First, clone the repository from GitHub:
 git clone https://github.com/OmkarVaity/Bitcoin-Explorer.git
 cd Bitcoin-Explorer
 ```
-### *** 2. Setup Env variables***
+### **2. Setup Env variables**
+```
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=postgres
@@ -42,8 +43,9 @@ DB_PASSWORD=**********
 DB_NAME=btc_explorer
 BITCOIN_RPC_USER=omkar
 BITCOIN_RPC_PASSWORD==**********
+```
 
-### *** 3. Install Postgres and Setup DB ***
+### **3. Install Postgres and Setup DB **
 1. CREATE DB
 CREATE DATABASE btc_explorer;
 
@@ -57,27 +59,37 @@ CREATE TABLE block_info (
     block_height INT NOT NULL
 );
 
-### *** 4. Set up Backend ***
+### **4. Set up Backend **
+```
 cd backend
 npm install
 npm run dev
+```
 
-### *** 5. Set up Frontend ***
+### **5. Set up Frontend **
+```
 cd frontend
 npm install 
 npm start
+```
 
-### *** 6. Set up Rust Ingestion Script ***
+### **6. Set up Rust Ingestion Script **
+```
 cd ingestion
 cargo run
+```
 
-### *** 7. View UI ***
+### **7. View UI **
+```
 Once the backend and frontend are running, open your browser and go to http://localhost:3000.
 You should see the current block height displayed in real-time.
+```
 
-### *** Endpoints ***
+### **Endpoints **
+```
 GET /block-height: Returns the latest block height from the database.
 Example Response: { "block_height": 410273 }
+```
 
 
-## ***Project by Omkar Vaity**
+## **Project by Omkar Vaity**
