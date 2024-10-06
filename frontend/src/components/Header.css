@@ -1,0 +1,35 @@
+.header { 
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 50px;
+    background-color: #141A24;
+    color: white;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.header-logo {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #f5a623;
+}
+
+.header-nav ul {
+    list-style: none;
+    display: flex;
+    gap: 30px
+}
+
+.header-nav li {
+    cursor: pointer;
+}
+
+.header-nav a {
+    color: #fff;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.header-nav a:hover {
+    color: #f5a623;
+}

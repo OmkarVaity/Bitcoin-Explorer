@@ -1,0 +1,35 @@
+.block-height-section {
+    text-align: center;
+    padding: 60px;
+    background: linear-gradient(to bottom, #1e2940, #293b56);
+    color: white;
+}
+
+.block-height-container {
+    display: inline-block;
+    background-color: #ffffff10;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s ease;
+}
+
+.block-height-container:hover {
+    transform: scale(1.05);
+}
+
+.bitcoin-symbol span {
+    font-size: 6em;
+    color: #f5a623;
+}
+
+.block-height-info h2 {
+    margin: 20px 0;
+    font-size: 2.5em;
+    color: #f5a623;
+}
+
+.block-height-value {
+    font-size: 3em;
+    font-weight: bold;
+}

@@ -1,0 +1,9 @@
+/target
+
+# Cargo build files
+**/*.rs.bk
+Cargo.lock
+
+# Ignore temporary files
+.DS_Store
+Thumbs.db
