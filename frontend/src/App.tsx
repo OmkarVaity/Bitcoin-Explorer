@@ -1,18 +1,22 @@
 import React from 'react';
-import logo from './logo.svg';
 import './App.css';
 import Header from './components/Header';
-import BlockHeight from './components/BlockHeight';
 import MetricsSection from './components/MetricsSection';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import PricesPage from './components/PricesPage';
 
-function App() {
+const App: React.FC = () => {
   return (
-    <div className = "App">
+    <Router>
+      <div className="App">
         <Header />
-        <BlockHeight />
-        <MetricsSection /> 
-    </div>
+        <Routes>
+          <Route path="/" element={<MetricsSection />} />
+          <Route path="/prices" element={<PricesPage />} />
+        </Routes>
+      </div>
+    </Router>
   );
-}
+};
 
 export default App;
