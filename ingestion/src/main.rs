@@ -15,6 +15,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let bitcoin_rpc_user = env::var("BITCOIN_RPC_USER")?;
     let bitcoin_rpc_password = env::var("BITCOIN_RPC_PASSWORD")?;
     let postgres_host = env::var("DB_HOST")?;
+    let bitcoin_rpc_host = env::var("BITCOIN_RPC_HOST").unwrap_or("bitcoin-core".to_string());
+    let bitcoin_rpc_port = env::var("BITCOIN_RPC_PORT").unwrap_or("8332".to_string());
 
     let db_connection_string = format!(
         "host={} user={} password={} dbname={}",
@@ -29,7 +31,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     });
 
-    let bitcoin_client_url = "http://localhost:8332";
+   // let bitcoin_client_url = "http://localhost:8332";
+    let bitcoin_client_url = format!("http://{}:{}", bitcoin_rpc_host, bitcoin_rpc_port);
     let client = reqwest::Client::new();
 
     loop {
@@ -39,7 +42,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         // Fetch block height from the Bitcoin Core
         let response = client
-            .post(bitcoin_client_url)
+            .post(&bitcoin_client_url.clone())
             .basic_auth(&bitcoin_rpc_user, Some(&bitcoin_rpc_password))
             .json(&serde_json::json!({
                 "jsonrpc": "1.0",
@@ -57,7 +60,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                  // Fetch block hash for the latest block from Bitcoin Core
                  let block_hash_response = client
-                 .post(bitcoin_client_url)
+                 .post(&bitcoin_client_url)
                  .basic_auth(&bitcoin_rpc_user, Some(&bitcoin_rpc_password))
                  .json(&serde_json::json!({
                      "jsonrpc": "1.0",
