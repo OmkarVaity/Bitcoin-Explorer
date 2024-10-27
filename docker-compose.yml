@@ -19,6 +19,11 @@ services:
       interval: 10s
       retries: 50
       timeout: 50s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"
 
   backend:
     build:
