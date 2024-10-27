@@ -17,8 +17,13 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
       interval: 10s
-      retries: 5
-      timeout: 5s
+      retries: 50
+      timeout: 50s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"
 
   backend:
     build:
@@ -31,7 +36,8 @@ services:
       DB_NAME: ${DB_NAME}
       DB_PORT: ${DB_PORT}
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     ports:
       - "5000:5000"
     networks:
