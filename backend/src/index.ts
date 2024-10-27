@@ -8,7 +8,7 @@ import http from 'http';
 
 dotenv.config({path: '../.env'}); 
 
-const app = express(); 
+const app = express();  
 const port = 5000;
 const server = http.createServer(app);
 const io = new Server(server);
