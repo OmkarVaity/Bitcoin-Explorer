@@ -14,6 +14,11 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - my_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 10s
+      retries: 5
+      timeout: 5s
 
   backend:
     build:
@@ -25,8 +30,6 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
       DB_PORT: ${DB_PORT}
-      BITCOIN_RPC_USER: ${BITCOIN_RPC_USER}
-      BITCOIN_RPC_PASSWORD: ${BITCOIN_RPC_PASSWORD}
     depends_on:
       - postgres
     ports:
@@ -39,9 +42,15 @@ services:
       context: ./frontend
     container_name: frontend
     ports:
-      - "3000:3000"
+      - "3000:80"
     networks:
       - my_network
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost"]
+      interval: 10s
+      retries: 3
+      timeout: 5s
 
   ingestion:
     build:
@@ -53,31 +62,9 @@ services:
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
-      BITCOIN_RPC_USER: ${BITCOIN_RPC_USER}
-      BITCOIN_RPC_PASSWORD: ${BITCOIN_RPC_PASSWORD}
-      BITCOIN_RPC_HOST: bitcoin-core
-      BITCOIN_RPC_PORT: 8332
     depends_on:
-      - postgres
-      - bitcoin-core
-    networks:
-      - my_network
-
-  bitcoin-core:
-    image: ruimarinho/bitcoin-core:22
-    ports:
-      - "8332:8332"
-    environment:
-      BITCOIN_RPC_USER: ${BITCOIN_RPC_USER}
-      BITCOIN_RPC_PASSWORD: ${BITCOIN_RPC_PASSWORD}
-      BITCOIN_PORT: 8332
-      BITCOIN_EXTRA_ARGS: |
-        Prune=550
-        txindex=0  
-    volumes:
-      - bitcoin_data:/home/bitcoin/.bitcoin 
-    expose:
-      - 8332
+      postgres:
+        condition: service_healthy
     networks:
       - my_network
 
@@ -87,4 +74,3 @@ networks:
 
 volumes:
   postgres_data:
-  bitcoin_data:

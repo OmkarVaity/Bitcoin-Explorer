@@ -1,0 +1,86 @@
+name: CI/CD Pipeline for Bitcoin Explorer
+
+on:
+  push:
+    branches:
+      - main  
+  pull_request:
+    branches:
+      - main 
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_DB: ${{ secrets.DB_NAME }}
+          POSTGRES_USER: ${{ secrets.DB_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U $DB_USER" 
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DB_HOST: localhost
+      DB_NAME: ${{ secrets.DB_NAME }}
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push backend Docker image
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/btc-explorer-backend:latest -f ./backend/Dockerfile ./backend
+          docker push ${{ secrets.DOCKER_USERNAME }}/btc-explorer-backend:latest
+
+      - name: Build and push frontend Docker image
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/btc-explorer-frontend:latest -f ./frontend/Dockerfile ./frontend
+          docker push ${{ secrets.DOCKER_USERNAME }}/btc-explorer-frontend:latest
+
+      - name: Build and push ingestion Docker image
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/btc-explorer-ingestion:latest -f ./ingestion/Dockerfile ./ingestion
+          docker push ${{ secrets.DOCKER_USERNAME }}/btc-explorer-ingestion:latest
+
+#   deploy:
+#     runs-on: ubuntu-latest
+#     needs: build-and-push
+#     steps:
+#       - name: SSH Deploy
+#         uses: appleboy/ssh-action@v0.1.8
+#         with:
+#           host: ${{ secrets.DEPLOY_SERVER }}
+#           username: ${{ secrets.DEPLOY_USER }}
+#           key: ${{ secrets.SSH_PRIVATE_KEY }}
+#           script: |
+#             docker pull ${{ secrets.DOCKER_USERNAME }}/btc-explorer-backend:latest
+#             docker pull ${{ secrets.DOCKER_USERNAME }}/btc-explorer-frontend:latest
+#             docker pull ${{ secrets.DOCKER_USERNAME }}/btc-explorer-ingestion:latest
+#             docker-compose -f /path/to/your/docker-compose.yml up -d
