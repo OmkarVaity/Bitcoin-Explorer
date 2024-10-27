@@ -24,16 +24,27 @@ const pool = new Pool({
     port: parseInt(process.env.DB_PORT || "5432")
 });
 
-app.get('/block-height', async(req, res) => {
-    try{
-        const result = await pool.query('SELECT block_height FROM block_info ORDER BY id DESC LIMIT 1');
-        if(result.rows.length > 0) {
-            res.json({ block_height: result.rows[0].block_height });
-        } else {
-            res.status(404).json({ message: 'No data found' });
-        }
-    } catch(err){
-        console.error('Database query failed: ', err);
+// app.get('/block-height', async(req, res) => {
+//     try{
+//         const result = await pool.query('SELECT block_height FROM block_info ORDER BY id DESC LIMIT 1');
+//         if(result.rows.length > 0) {
+//             res.json({ block_height: result.rows[0].block_height });
+//         } else {
+//             res.status(404).json({ message: 'No data found' });
+//         }
+//     } catch(err){
+//         console.error('Database query failed: ', err);
+//         res.status(500).json({ message: 'Internal server error' });
+//     }
+// });
+
+app.get('/block-height', async (req, res) => {
+    try {
+        const response = await fetch('https://blockstream.info/api/blocks/tip/height');
+        const blockHeight = await response.text();
+        res.json({ block_height: blockHeight });
+    } catch (err) {
+        console.error('Error fetching block height:', err);
         res.status(500).json({ message: 'Internal server error' });
     }
 });
