@@ -9,7 +9,6 @@ const Header : React.FC = () => {
             <nav className= "header-nav">
                 <ul>
                     <li><a href='/'>Home</a></li>
-                    <li><a href="/metrics">Metrics</a></li>
                     <li><a href="/about">About</a></li>
                     <li><Link to="/prices">Prices</Link></li>
                 </ul>
