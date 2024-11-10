@@ -93,6 +93,8 @@ jobs:
       - name: SSH Deploy Using Password
         run: |
           sshpass -p "${{ secrets.DEPLOY_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_SERVER }} <<EOF
+            docker stop postgres-db frontend backend ingestion || true
+            docker rm postgres-db frontend backend ingestion || true
             docker pull ${{ secrets.DOCKER_USERNAME }}/btc-explorer-backend:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/btc-explorer-frontend:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/btc-explorer-ingestion:latest
