@@ -13,7 +13,7 @@ const FearGreedIndex: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('http://localhost:5000/bitcoin-fear-greed');
+        const response = await fetch('http://198.211.106.160:5000/bitcoin-fear-greed');
         const data = await response.json();
 
         // Log the raw timestamp data from the API
