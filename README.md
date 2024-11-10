@@ -88,7 +88,7 @@ You should see the current block height displayed in real-time.
 ### **Endpoints **
 ```
 GET /block-height: Returns the latest block height from the database.
-Example Response: { "block_height": 410273 }
+Example Response: { "block_height": 410273 } test
 ```
 
 
