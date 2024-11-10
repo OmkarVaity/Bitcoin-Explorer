@@ -93,7 +93,7 @@ jobs:
       - name: SSH Deploy Using Password
         run: |
           sshpass -p "${{ secrets.DEPLOY_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_SERVER }} <<EOF
-            
+            # Stop and remove any running containers by name
             docker ps -q --filter "name=postgres-db" | xargs -r docker stop || true
             docker ps -q --filter "name=frontend" | xargs -r docker stop || true
             docker ps -q --filter "name=backend" | xargs -r docker stop || true
@@ -104,12 +104,18 @@ jobs:
             docker ps -a -q --filter "name=backend" | xargs -r docker rm || true
             docker ps -a -q --filter "name=ingestion" | xargs -r docker rm || true
 
+            # Add a short delay to ensure containers are fully removed
+            sleep 5
+
+            # Prune unused networks
             docker network prune -f
 
+            # Pull the latest images
             docker pull ${{ secrets.DOCKER_USERNAME }}/btc-explorer-backend:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/btc-explorer-frontend:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/btc-explorer-ingestion:latest
 
+            # Navigate to the project directory and start containers
             cd ~/Bitcoin-Explorer || exit 1
             docker-compose down
             docker-compose up -d
