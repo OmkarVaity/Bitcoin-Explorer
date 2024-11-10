@@ -93,11 +93,23 @@ jobs:
       - name: SSH Deploy Using Password
         run: |
           sshpass -p "${{ secrets.DEPLOY_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_SERVER }} <<EOF
-            docker stop postgres-db frontend backend ingestion || true
-            docker rm postgres-db frontend backend ingestion || true
+            
+            docker ps -q --filter "name=postgres-db" | xargs -r docker stop || true
+            docker ps -q --filter "name=frontend" | xargs -r docker stop || true
+            docker ps -q --filter "name=backend" | xargs -r docker stop || true
+            docker ps -q --filter "name=ingestion" | xargs -r docker stop || true
+
+            docker ps -a -q --filter "name=postgres-db" | xargs -r docker rm || true
+            docker ps -a -q --filter "name=frontend" | xargs -r docker rm || true
+            docker ps -a -q --filter "name=backend" | xargs -r docker rm || true
+            docker ps -a -q --filter "name=ingestion" | xargs -r docker rm || true
+
+            docker network prune -f
+
             docker pull ${{ secrets.DOCKER_USERNAME }}/btc-explorer-backend:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/btc-explorer-frontend:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/btc-explorer-ingestion:latest
+
             cd ~/Bitcoin-Explorer || exit 1
             docker-compose down
             docker-compose up -d
