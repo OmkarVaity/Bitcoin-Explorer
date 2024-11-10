@@ -13,7 +13,7 @@ const BitcoinDominance: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('http://localhost:5000/bitcoin-dominance');
+        const response = await fetch('http://198.211.106.160:5000/bitcoin-dominance');
         const data = await response.json();
         console.log('Fetched data:', data); 
         setDominanceData(data);

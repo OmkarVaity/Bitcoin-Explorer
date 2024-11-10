@@ -7,7 +7,7 @@ const BitcoinPrice: React.FC = () => {
 
   const fetchBitcoinPrice = async () => {
     try {
-      const response = await fetch('http://localhost:5000/bitcoin-price');
+      const response = await fetch('http://198.211.106.160:5000/bitcoin-price');
       const data = await response.json();
       setPriceUsd(data.price_usd);
       setPriceEur(data.price_eur);

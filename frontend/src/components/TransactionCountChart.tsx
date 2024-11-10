@@ -14,7 +14,7 @@ const TransactionCountChart: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/transaction-count');
+        const response = await axios.get('http://198.211.106.160:5000/transaction-count');
         setData(response.data);
 
         const maxCount = Math.max(...response.data.map((d: TransactionData) => d.transaction_count));

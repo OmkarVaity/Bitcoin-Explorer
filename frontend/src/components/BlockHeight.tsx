@@ -8,7 +8,7 @@ const BlockHeight: React.FC = () => {
     useEffect(() => {
         const fetchBlockHeight = async () => {
             try {
-                const response = await axios.get<{ block_height: number }>('http://localhost:5000/block-height');
+                const response = await axios.get<{ block_height: number }>('http://198.211.106.160:5000/block-height');
                 setBlockHeight(response.data.block_height);
             } catch (err) {
                 console.error('Error fetching block height:', err);
