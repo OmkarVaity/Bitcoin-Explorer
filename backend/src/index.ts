@@ -13,7 +13,9 @@ const port = 5000;
 const server = http.createServer(app);
 const io = new Server(server);
 
-app.use(cors());   
+app.use(cors({
+    origin: 'http://198.211.106.160:3000'
+}));   
 app.use(express.json());
 
 const pool = new Pool({
