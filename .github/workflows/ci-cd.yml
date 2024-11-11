@@ -12,6 +12,9 @@ concurrency:
   group: bitcoin-explorer-deployment
   cancel-in-progress: true
 
+env:
+  VERSION: v${{ github.run_number }}  # Using GitHub's run number as a version, can be customized
+
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
@@ -50,18 +53,18 @@ jobs:
 
       - name: Build and push backend Docker image
         run: |
-          docker build --no-cache -t ${{ secrets.DOCKER_USERNAME }}/btc-explorer-backend:latest -f ./backend/Dockerfile ./backend
-          docker push ${{ secrets.DOCKER_USERNAME }}/btc-explorer-backend:latest
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/btc-explorer-backend:${{ env.VERSION }} -f ./backend/Dockerfile ./backend
+          docker push ${{ secrets.DOCKER_USERNAME }}/btc-explorer-backend:${{ env.VERSION }}
 
       - name: Build and push frontend Docker image
         run: |
-          docker build --no-cache -t ${{ secrets.DOCKER_USERNAME }}/btc-explorer-frontend:latest -f ./frontend/Dockerfile ./frontend
-          docker push ${{ secrets.DOCKER_USERNAME }}/btc-explorer-frontend:latest
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/btc-explorer-frontend:${{ env.VERSION }} -f ./frontend/Dockerfile ./frontend
+          docker push ${{ secrets.DOCKER_USERNAME }}/btc-explorer-frontend:${{ env.VERSION }}
 
       - name: Build and push ingestion Docker image
         run: |
-          docker build --no-cache -t ${{ secrets.DOCKER_USERNAME }}/btc-explorer-ingestion:latest -f ./ingestion/Dockerfile ./ingestion
-          docker push ${{ secrets.DOCKER_USERNAME }}/btc-explorer-ingestion:latest
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/btc-explorer-ingestion:${{ env.VERSION }} -f ./ingestion/Dockerfile ./ingestion
+          docker push ${{ secrets.DOCKER_USERNAME }}/btc-explorer-ingestion:${{ env.VERSION }}
 
   deploy:
     runs-on: ubuntu-latest
@@ -83,12 +86,17 @@ jobs:
             docker rm btc-explorer-ingestion || true
             docker network prune -f || true
 
-            # Pull the latest images
-            docker pull ${{ secrets.DOCKER_USERNAME }}/btc-explorer-backend:latest
-            docker pull ${{ secrets.DOCKER_USERNAME }}/btc-explorer-frontend:latest
-            docker pull ${{ secrets.DOCKER_USERNAME }}/btc-explorer-ingestion:latest
+            # Pull the versioned images
+            docker pull ${{ secrets.DOCKER_USERNAME }}/btc-explorer-backend:${{ env.VERSION }}
+            docker pull ${{ secrets.DOCKER_USERNAME }}/btc-explorer-frontend:${{ env.VERSION }}
+            docker pull ${{ secrets.DOCKER_USERNAME }}/btc-explorer-ingestion:${{ env.VERSION }}
 
-            # Navigate to the project directory and start containers using docker-compose
+            # Update docker-compose file to use versioned images
+            sed -i 's|image: omkarvaity/btc-explorer-backend:.*|image: omkarvaity/btc-explorer-backend:${{ env.VERSION }}|' docker-compose.yml
+            sed -i 's|image: omkarvaity/btc-explorer-frontend:.*|image: omkarvaity/btc-explorer-frontend:${{ env.VERSION }}|' docker-compose.yml
+            sed -i 's|image: omkarvaity/btc-explorer-ingestion:.*|image: omkarvaity/btc-explorer-ingestion:${{ env.VERSION }}|' docker-compose.yml
+
+            # Restart the services using docker-compose
             cd ~/Bitcoin-Explorer || exit 1
             docker-compose down
             docker-compose up -d
