@@ -17,15 +17,16 @@ jobs:
     runs-on: ubuntu-latest
 
     services:
-        postgres:
-          image: postgres
-          env:
-            POSTGRES_PASSWORD: postgres
-          options: >-
-            --health-cmd pg_isready
-            --health-interval 10s
-            --health-timeout 5s
-            --health-retries 5
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -49,17 +50,17 @@ jobs:
 
       - name: Build and push backend Docker image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/btc-explorer-backend:latest -f ./backend/Dockerfile ./backend
+          docker build --no-cache -t ${{ secrets.DOCKER_USERNAME }}/btc-explorer-backend:latest -f ./backend/Dockerfile ./backend
           docker push ${{ secrets.DOCKER_USERNAME }}/btc-explorer-backend:latest
 
       - name: Build and push frontend Docker image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/btc-explorer-frontend:latest -f ./frontend/Dockerfile ./frontend
+          docker build --no-cache -t ${{ secrets.DOCKER_USERNAME }}/btc-explorer-frontend:latest -f ./frontend/Dockerfile ./frontend
           docker push ${{ secrets.DOCKER_USERNAME }}/btc-explorer-frontend:latest
 
       - name: Build and push ingestion Docker image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/btc-explorer-ingestion:latest -f ./ingestion/Dockerfile ./ingestion
+          docker build --no-cache -t ${{ secrets.DOCKER_USERNAME }}/btc-explorer-ingestion:latest -f ./ingestion/Dockerfile ./ingestion
           docker push ${{ secrets.DOCKER_USERNAME }}/btc-explorer-ingestion:latest
 
   deploy:
@@ -73,9 +74,13 @@ jobs:
         run: |
           sshpass -p "${{ secrets.DEPLOY_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_SERVER }} <<EOF
             
-            # Stop and remove all running containers and networks to avoid conflicts
-            docker stop $(docker ps -a -q) || true
-            docker rm $(docker ps -a -q) || true
+            # Stop and remove specific containers to avoid conflicts
+            docker stop btc-explorer-backend || true
+            docker rm btc-explorer-backend || true
+            docker stop btc-explorer-frontend || true
+            docker rm btc-explorer-frontend || true
+            docker stop btc-explorer-ingestion || true
+            docker rm btc-explorer-ingestion || true
             docker network prune -f || true
 
             # Pull the latest images
@@ -83,8 +88,15 @@ jobs:
             docker pull ${{ secrets.DOCKER_USERNAME }}/btc-explorer-frontend:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/btc-explorer-ingestion:latest
 
-            # Navigate to the project directory and start containers
+            # Navigate to the project directory and start containers using docker-compose
             cd ~/Bitcoin-Explorer || exit 1
             docker-compose down
             docker-compose up -d
+          EOF
+
+      - name: Verify Deployment
+        run: |
+          sshpass -p "${{ secrets.DEPLOY_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_SERVER }} <<EOF
+            # Check running containers and their images
+            docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}"
           EOF
