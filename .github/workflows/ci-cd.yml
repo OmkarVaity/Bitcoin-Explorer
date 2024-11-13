@@ -76,27 +76,16 @@ jobs:
       - name: SSH Deploy Using Password
         run: |
           sshpass -p "${{ secrets.DEPLOY_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_SERVER }} <<EOF
-            
-            # Stop and remove specific containers to avoid conflicts
-            docker stop btc-explorer-backend || true
-            docker rm btc-explorer-backend || true
-            docker stop btc-explorer-frontend || true
-            docker rm btc-explorer-frontend || true
-            docker stop btc-explorer-ingestion || true
-            docker rm btc-explorer-ingestion || true
-            docker network prune -f || true
 
-            # Pull the versioned images
+
             docker pull ${{ secrets.DOCKER_USERNAME }}/btc-explorer-backend:${{ env.VERSION }}
             docker pull ${{ secrets.DOCKER_USERNAME }}/btc-explorer-frontend:${{ env.VERSION }}
             docker pull ${{ secrets.DOCKER_USERNAME }}/btc-explorer-ingestion:${{ env.VERSION }}
 
-            # Update docker-compose file to use versioned images
             sed -i 's|image: omkarvaity/btc-explorer-backend:.*|image: omkarvaity/btc-explorer-backend:${{ env.VERSION }}|' docker-compose.yml
             sed -i 's|image: omkarvaity/btc-explorer-frontend:.*|image: omkarvaity/btc-explorer-frontend:${{ env.VERSION }}|' docker-compose.yml
             sed -i 's|image: omkarvaity/btc-explorer-ingestion:.*|image: omkarvaity/btc-explorer-ingestion:${{ env.VERSION }}|' docker-compose.yml
 
-            # Restart the services using docker-compose
             cd ~/Bitcoin-Explorer || exit 1
             docker-compose down
             docker-compose up -d
@@ -105,6 +94,5 @@ jobs:
       - name: Verify Deployment
         run: |
           sshpass -p "${{ secrets.DEPLOY_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_SERVER }} <<EOF
-            # Check running containers and their images
             docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}"
           EOF
