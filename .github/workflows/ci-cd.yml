@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  VERSION: v${{ github.run_number }}  # Using GitHub's run number as a version, can be customized
+  VERSION: v${{ github.run_number }}  # Using GitHub's run number as a version
 
 jobs:
   build-and-push:
@@ -76,17 +76,16 @@ jobs:
       - name: SSH Deploy Using Password
         run: |
           sshpass -p "${{ secrets.DEPLOY_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_SERVER }} <<EOF
-
-
-            docker pull ${{ secrets.DOCKER_USERNAME }}/btc-explorer-backend:${{ env.VERSION }}
-            docker pull ${{ secrets.DOCKER_USERNAME }}/btc-explorer-frontend:${{ env.VERSION }}
-            docker pull ${{ secrets.DOCKER_USERNAME }}/btc-explorer-ingestion:${{ env.VERSION }}
+            cd ~/Bitcoin-Explorer || exit 1
 
             sed -i 's|image: omkarvaity/btc-explorer-backend:.*|image: omkarvaity/btc-explorer-backend:${{ env.VERSION }}|' docker-compose.yml
             sed -i 's|image: omkarvaity/btc-explorer-frontend:.*|image: omkarvaity/btc-explorer-frontend:${{ env.VERSION }}|' docker-compose.yml
             sed -i 's|image: omkarvaity/btc-explorer-ingestion:.*|image: omkarvaity/btc-explorer-ingestion:${{ env.VERSION }}|' docker-compose.yml
 
-            cd ~/Bitcoin-Explorer || exit 1
+            docker pull ${{ secrets.DOCKER_USERNAME }}/btc-explorer-backend:${{ env.VERSION }}
+            docker pull ${{ secrets.DOCKER_USERNAME }}/btc-explorer-frontend:${{ env.VERSION }}
+            docker pull ${{ secrets.DOCKER_USERNAME }}/btc-explorer-ingestion:${{ env.VERSION }}
+
             docker-compose down
             docker-compose up -d
           EOF
