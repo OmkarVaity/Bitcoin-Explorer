@@ -42,6 +42,29 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     loop {
+        // Fetch current block height from Blockstream API
+        if let Ok(current_block_height) = fetch_current_block_height(&client).await {
+            // Process new blocks only
+            if current_block_height > last_block_height {
+                for height in (last_block_height + 1)..=current_block_height {
+                    if let Some(block_hash_response) = fetch_with_retries(&client, &format!("https://blockstream.info/api/block-height/{}", height)).await {
+                        let block_hash = block_hash_response.text().await.unwrap_or_default();
+                        if let Some(tx_count) = fetch_transaction_count(&client, &block_hash).await {
+                            db_client.execute(
+                                "INSERT INTO block_info (block_height, transaction_count) VALUES ($1, $2)",
+                                &[&height, &tx_count]
+                            ).await?;
+                            println!("Transaction count: {} for block height: {} ingested successfully", tx_count, height);
+                        }
+                    }
+                }
+
+                // Update last processed block height
+                last_block_height = current_block_height;
+            } else {
+                println!("No new blocks to process. Current block height: {}", last_block_height);
+            }
+        }
 
         // Fetch Bitcoin price and 24-hour volume from CoinGecko API
         if let Ok((price_usd, price_eur, volume_usd)) = fetch_bitcoin_price_data(&client).await {
@@ -70,31 +93,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             eprintln!("Failed to fetch Bitcoin price data.");
         }
 
-        // Fetch current block height from Blockstream API
-        if let Ok(current_block_height) = fetch_current_block_height(&client).await {
-            // Process new blocks only
-            if current_block_height > last_block_height {
-                for height in (last_block_height + 1)..=current_block_height {
-                    if let Some(block_hash_response) = fetch_with_retries(&client, &format!("https://blockstream.info/api/block-height/{}", height)).await {
-                        let block_hash = block_hash_response.text().await.unwrap_or_default();
-                        if let Some(tx_count) = fetch_transaction_count(&client, &block_hash).await {
-                            db_client.execute(
-                                "INSERT INTO block_info (block_height, transaction_count) VALUES ($1, $2)",
-                                &[&height, &tx_count]
-                            ).await?;
-                            println!("Transaction count: {} for block height: {} ingested successfully", tx_count, height);
-                        }
-                    }
-                }
-
-                // Update last processed block height
-                last_block_height = current_block_height;
-            } else {
-                println!("No new blocks to process. Current block height: {}", last_block_height);
-            }
-        }
-
-        
         tokio::time::sleep(Duration::from_secs(30)).await;
     }
 }
