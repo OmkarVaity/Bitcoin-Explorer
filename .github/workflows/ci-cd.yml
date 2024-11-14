@@ -66,6 +66,10 @@ jobs:
           docker build -t ${{ secrets.DOCKER_USERNAME }}/btc-explorer-ingestion:${{ env.VERSION }} -f ./ingestion/Dockerfile ./ingestion
           docker push ${{ secrets.DOCKER_USERNAME }}/btc-explorer-ingestion:${{ env.VERSION }}
 
+      - name: Verify Ingestion Docker Image Code
+        run: |
+          docker run --rm ${{ secrets.DOCKER_USERNAME }}/btc-explorer-ingestion:${{ env.VERSION }} cat /app/src/main.rs
+          
   deploy:
     runs-on: ubuntu-latest
     needs: build-and-push
