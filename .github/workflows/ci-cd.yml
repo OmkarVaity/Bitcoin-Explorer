@@ -80,18 +80,24 @@ jobs:
       - name: SSH Deploy Using Password
         run: |
           sshpass -p "${{ secrets.DEPLOY_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_SERVER }} <<EOF
-            cd ~/Bitcoin-Explorer || exit 1
+            # Stop and remove existing containers
+            docker stop backend ingestion frontend || true
+            docker rm backend ingestion frontend || true
 
-            # Update docker-compose.yml with the new image tags
-            sed -i 's|image: omkarvaity/btc-explorer-backend:.*|image: omkarvaity/btc-explorer-backend:${{ env.VERSION }}|' docker-compose.yml
-            sed -i 's|image: omkarvaity/btc-explorer-frontend:.*|image: omkarvaity/btc-explorer-frontend:${{ env.VERSION }}|' docker-compose.yml
-            sed -i 's|image: omkarvaity/btc-explorer-ingestion:.*|image: omkarvaity/btc-explorer-ingestion:${{ env.VERSION }}|' docker-compose.yml
-
-            # Remove old images to ensure pulling the latest version
+            # Prune unused images to save space
             docker image prune -f
 
-            # Pull the latest images, bring down the containers, and recreate them
-            docker-compose pull && docker-compose down && docker-compose up -d --force-recreate
+            # Pull and run the latest backend container
+            docker pull omkarvaity/btc-explorer-backend:${{ env.VERSION }}
+            docker run -d --name backend -p 5000:5000 omkarvaity/btc-explorer-backend:${{ env.VERSION }}
+
+            # Pull and run the latest ingestion container
+            docker pull omkarvaity/btc-explorer-ingestion:${{ env.VERSION }}
+            docker run -d --name ingestion omkarvaity/btc-explorer-ingestion:${{ env.VERSION }}
+
+            # Pull and run the latest frontend container
+            docker pull omkarvaity/btc-explorer-frontend:${{ env.VERSION }}
+            docker run -d --name frontend -p 3000:80 omkarvaity/btc-explorer-frontend:${{ env.VERSION }}
           EOF
 
       - name: Verify Deployment
