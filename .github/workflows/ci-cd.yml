@@ -77,22 +77,26 @@ jobs:
       - name: Install SSH Client
         run: sudo apt-get update && sudo apt-get install -y sshpass
 
-      - name: SSH Deploy Using Password
+      - name: Copy Docker Compose file to Server
+        run: |
+          sshpass -p "${{ secrets.DEPLOY_PASSWORD }}" scp -o StrictHostKeyChecking=no docker-compose.yml ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_SERVER }}:/home/${{ secrets.DEPLOY_USER }}/docker-compose.yml
+
+      - name: SSH Deploy Using Docker Compose
         env:
           VERSION: ${{ env.VERSION }}
         run: |
           sshpass -p "${{ secrets.DEPLOY_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_SERVER }} <<EOF
-            # Update Docker images in Docker Compose file
+            cd /home/${{ secrets.DEPLOY_USER }}
             sed -i "s/omkarvaity\/btc-explorer-backend:.*/omkarvaity\/btc-explorer-backend:\${VERSION}/g" docker-compose.yml
             sed -i "s/omkarvaity\/btc-explorer-frontend:.*/omkarvaity\/btc-explorer-frontend:\${VERSION}/g" docker-compose.yml
             sed -i "s/omkarvaity\/btc-explorer-ingestion:.*/omkarvaity\/btc-explorer-ingestion:\${VERSION}/g" docker-compose.yml
 
             # Pull the latest images
-            docker-compose pull
+            docker-compose -f docker-compose.yml pull
 
             # Restart all services with Docker Compose
-            docker-compose down
-            docker-compose up -d
+            docker-compose -f docker-compose.yml down
+            docker-compose -f docker-compose.yml up -d
           EOF
 
       - name: Verify Deployment
