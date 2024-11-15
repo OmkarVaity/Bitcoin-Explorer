@@ -78,26 +78,21 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y sshpass
 
       - name: SSH Deploy Using Password
+        env:
+          VERSION: ${{ env.VERSION }}
         run: |
           sshpass -p "${{ secrets.DEPLOY_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_SERVER }} <<EOF
-            # Stop and remove existing containers
-            docker stop backend ingestion frontend || true
-            docker rm backend ingestion frontend || true
+            # Update Docker images in Docker Compose file
+            sed -i "s/omkarvaity\/btc-explorer-backend:.*/omkarvaity\/btc-explorer-backend:\${VERSION}/g" docker-compose.yml
+            sed -i "s/omkarvaity\/btc-explorer-frontend:.*/omkarvaity\/btc-explorer-frontend:\${VERSION}/g" docker-compose.yml
+            sed -i "s/omkarvaity\/btc-explorer-ingestion:.*/omkarvaity\/btc-explorer-ingestion:\${VERSION}/g" docker-compose.yml
 
-            # Prune unused images to save space
-            docker image prune -f
+            # Pull the latest images
+            docker-compose pull
 
-            # Pull and run the latest backend container
-            docker pull omkarvaity/btc-explorer-backend:${{ env.VERSION }}
-            docker run -d --name backend -p 5000:5000 omkarvaity/btc-explorer-backend:${{ env.VERSION }}
-
-            # Pull and run the latest ingestion container
-            docker pull omkarvaity/btc-explorer-ingestion:${{ env.VERSION }}
-            docker run -d --name ingestion omkarvaity/btc-explorer-ingestion:${{ env.VERSION }}
-
-            # Pull and run the latest frontend container
-            docker pull omkarvaity/btc-explorer-frontend:${{ env.VERSION }}
-            docker run -d --name frontend -p 3000:80 omkarvaity/btc-explorer-frontend:${{ env.VERSION }}
+            # Restart all services with Docker Compose
+            docker-compose down
+            docker-compose up -d
           EOF
 
       - name: Verify Deployment
